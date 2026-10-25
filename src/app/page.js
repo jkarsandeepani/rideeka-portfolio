@@ -117,7 +117,7 @@ function Hero() {
           </ul>
         </div>
         <div className="order-1 flex h-[22rem] items-end justify-center md:h-[30rem] lg:order-2 lg:h-[36rem]">
-          <img src="/rideeka.png" alt={`${site.first} ${site.last}`} className="h-full w-auto max-w-full object-contain object-bottom" onError={(e) => (e.currentTarget.style.display = "none")} />
+          <img src="/rideeka.webp" alt={`${site.first} ${site.last}`} className="h-full w-auto max-w-full object-contain object-bottom" onError={(e) => (e.currentTarget.style.display = "none")} />
         </div>
         <div className="order-3 pb-12 lg:w-72 lg:justify-self-end">
           <p className="mb-6 text-xs font-bold tracking-[0.25em] text-black/60">FIND ME ONLINE</p>
@@ -260,5 +260,5 @@ function Contact() {
 }
 
 export default function Page() {
-  return (<><Header /><main><Hero /><Projects /><Services /><Toolkit /><Contact /></main></>);
+  return (<><Loader /><Header /><main><Hero /><Projects /><Services /><Toolkit /><Contact /></main></>);
 }
