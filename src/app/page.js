@@ -63,12 +63,17 @@ function Header() {
     NAV.forEach(([id]) => { const el = document.getElementById(id); if (el) obs.observe(el); });
     return () => obs.disconnect();
   }, []);
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-center px-3 py-3 md:justify-between md:px-10 md:py-5">
-      <div className="hidden w-72 items-center gap-2 text-sm font-medium lg:flex">
-        <span className="h-3 w-3 rounded-full bg-green-500" />{site.status}
+   return (
+    <header className="fixed inset-x-0 top-0 z-50 flex flex-col gap-2 px-3 py-3 md:flex-row md:items-center md:justify-between md:px-10 md:py-5">
+      <div className="flex items-center justify-between md:contents">
+        <div className="flex items-center gap-2 text-xs font-medium md:hidden lg:order-1 lg:flex lg:w-72 lg:text-sm">
+          <span className="h-2.5 w-2.5 rounded-full bg-green-500" />{site.status}
+        </div>
+        <div className="flex md:order-3 md:w-72 md:justify-end">
+          <a href="#contact" className="rounded-full bg-[#080808] px-4 py-2.5 text-xs font-semibold text-white md:px-6 md:py-4 md:text-sm">Let’s talk <Arrow /></a>
+        </div>
       </div>
-      <nav className="flex max-w-full gap-1 overflow-x-auto rounded-full bg-white/70 p-1.5 shadow-lg backdrop-blur">
+      <nav className="mx-auto flex max-w-full gap-1 overflow-x-auto rounded-full bg-white/70 p-1.5 shadow-lg backdrop-blur md:order-2 md:mx-0">
         {NAV.map(([id, label]) => (
           <a key={id} href={`#${id}`}
             className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition md:px-5 md:text-sm ${active === id ? "bg-[#080808] text-white" : "hover:bg-black/5"}`}>
@@ -76,9 +81,6 @@ function Header() {
           </a>
         ))}
       </nav>
-      <div className="hidden w-72 justify-end md:flex">
-        <a href="#contact" className="rounded-full bg-[#080808] px-6 py-4 text-sm font-semibold text-white">Let’s talk <Arrow /></a>
-      </div>
     </header>
   );
 }
@@ -86,7 +88,7 @@ function Header() {
 function PageSection({ id, title, children }) {
   return (
     <section id={id}>
-      <div className="bg-[#d8d8d6] px-2 pb-4 pt-24 text-center md:pb-12 md:pt-20">
+      <div className="bg-[#d8d8d6] px-2 pb-4 pt-32 text-center md:pb-12 md:pt-20">
         <h2 className="hero-word" style={{ fontSize: "clamp(2rem, 7vw, 5.5rem)" }}>/{title}</h2>
       </div>
       <div className="border-t border-black/20 bg-[#ededeb] px-4 py-12 md:px-10 md:py-20">
@@ -99,7 +101,7 @@ function PageSection({ id, title, children }) {
 function Hero() {
   const links = [["GitHub", site.github], ["LinkedIn", site.linkedin], ["Instagram", site.instagram], ["WhatsApp", `https://wa.me/${site.whatsapp}`]];
   return (
-    <section id="home" className="relative flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(circle_at_50%_55%,#f6f6f5,#d9d9d7)] px-4 pt-28 md:px-10 md:pt-36">
+    <section id="home" className="relative flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(circle_at_50%_55%,#f6f6f5,#d9d9d7)] px-4 pt-36 md:px-10 md:pt-36">
       <h1 className="font-heading flex flex-wrap items-center justify-center gap-x-4 text-center font-black leading-none" style={{ fontSize: "clamp(2.6rem,10.5vw,10rem)", letterSpacing: "-0.06em" }}>
         <span className="outline-text">{site.first}</span>
         <span className="text-[0.5em]">›</span>
