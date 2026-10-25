@@ -15,7 +15,44 @@ function Arrow({ down = false }) {
     </svg>
   );
 }
+const GREETINGS = [
+  { text: "ආයුබෝවන්", font: "'Noto Sans Sinhala', sans-serif" },
+  { text: "Hello" },
+  { text: "नमस्ते", font: "'Noto Sans Devanagari', sans-serif" },
+  { text: "Bonjour" },
+  { text: "Hola" },
+  { text: "こんにちは", font: "'Noto Sans JP', sans-serif" },
+];
 
+function Loader() {
+  const [i, setI] = useState(0);
+  const [done, setDone] = useState(false);
+  const [gone, setGone] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    if (i < GREETINGS.length - 1) {
+      const t = setTimeout(() => setI(i + 1), i === 0 ? 900 : 550);
+      return () => clearTimeout(t);
+    }
+    const t1 = setTimeout(() => setDone(true), 700);
+    const t2 = setTimeout(() => {
+      setGone(true);
+      document.body.style.overflow = "";
+    }, 1500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [i]);
+
+  if (gone) return null;
+  const g = GREETINGS[i];
+  return (
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#080808] px-4 text-white transition-transform duration-700 ease-in-out ${done ? "-translate-y-full" : ""}`}>
+      <p key={i} className="greet font-heading text-5xl font-extrabold md:text-8xl" style={g.font ? { fontFamily: g.font } : undefined}>
+        {g.text}
+      </p>
+    </div>
+  );
+}
 function Header() {
   const [active, setActive] = useState("home");
   useEffect(() => {

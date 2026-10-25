@@ -2,6 +2,7 @@
 
 body { font-family: "DM Sans", system-ui, sans-serif; }
 .font-heading { font-family: "Montserrat", system-ui, sans-serif; }
+
 .hero-word {
   font-family: "Montserrat", system-ui, sans-serif;
   font-weight: 900;
@@ -10,4 +11,11 @@ body { font-family: "DM Sans", system-ui, sans-serif; }
   font-size: clamp(2rem, 7vw, 5.5rem);
   color: #080808;
 }
+
 .outline-text { color: transparent; -webkit-text-stroke: 2px #080808; }
+
+.greet { animation: greetIn 0.35s ease-out; }
+@keyframes greetIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
