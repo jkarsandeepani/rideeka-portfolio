@@ -22,7 +22,7 @@ export const projects = [
 { name: "MARIDIAN'26", status: "done", type: "Digital development", desc: "Developed the MARIDIAN'26 event website for AIESEC in NSBM, featuring registration workflows, online shop,admin dashboards, and Firebase integration.", tech: ["HTML", "CSS", "JS"], demo: "https://maridian26.vercel.app/" },
   { name: "PORTFOLIO", status: "done", type: "Digital development", desc: "Responsive one-page site showcasing my projects, services and tech stack.", tech: ["Next.js", "React", "TTailwind CSS"], demo: "#" },
   //{ name: "STUDIO OS", status: "progress", type: "Digital development", desc: "Describe this project in one or two lines.", tech: ["Next.js", "Tailwind", "Firebase"], demo: "" },
-  //{ name: "Library Management System", status: "req", type: "Digital development", desc: "Describe this project in one or two lines.", tech: ["Figma", "Jira"], demo: "" },
+  { name: "Library Management System", status: "req", type: "Digital development", desc: "Gathering requirements for a real-world Library Management System.Preparing for development.", tech: ["React","SpringBoot","MySQL"], demo: "" },
 ];
 
 // learning: true shows a "Learning" tag
