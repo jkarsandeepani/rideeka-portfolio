@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import { site, projects, services, toolkit } from "@/data/content";
 
 const NAV = [["home", "Home"], ["projects", "Projects"], ["services", "Services"], ["toolkit", "Toolkit"], ["contact", "Contact"]];
@@ -73,14 +73,14 @@ function Header() {
           <a href="#contact" className="rounded-full bg-[#080808] px-4 py-2.5 text-xs font-semibold text-white md:px-6 md:py-4 md:text-sm">Let’s talk <Arrow /></a>
         </div>
       </div>
-      <nav className="mx-auto flex max-w-full gap-1 overflow-x-auto rounded-full bg-white/70 p-1.5 shadow-lg backdrop-blur md:order-2 md:mx-0">
-        {NAV.map(([id, label]) => (
-          <a key={id} href={`#${id}`}
-            className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition md:px-5 md:text-sm ${active === id ? "bg-[#080808] text-white" : "hover:bg-black/5"}`}>
-            {label}
-          </a>
-        ))}
-      </nav>
+    <nav className="flex w-full justify-between overflow-x-auto rounded-full bg-white/70 p-1 shadow-lg backdrop-blur [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:order-2 md:mx-0 md:w-auto md:justify-start md:gap-1 md:p-1.5">
+  {NAV.map(([id, label]) => (
+    <a key={id} href={`#${id}`}
+      className={`whitespace-nowrap rounded-full px-2.5 py-2 text-[11px] font-semibold transition sm:px-4 sm:text-xs md:px-5 md:text-sm ${active === id ? "bg-[#080808] text-white" : "hover:bg-black/5"}`}>
+      {label}
+    </a>
+  ))}
+</nav>
     </header>
   );
 }
@@ -97,6 +97,107 @@ function PageSection({ id, title, children }) {
     </section>
   );
 }
+const FACES = [
+  { src: "/rideeka-ba.webp", label: " Aspiring Business Analyst" },
+  { src: "/rideeka-dev.webp", label: "Software Developer" },
+];
+
+function PhotoFlip() {
+  const boxRef = useRef(null);
+  const cvRef = useRef(null);
+  const skipRef = useRef(() => {});
+  const [idx, setIdx] = useState(0);
+  const [shown, setShown] = useState(false);
+  const label = FACES[idx].label;
+
+  useEffect(() => {
+    const FORM = 1800, HOLD = 2000, BURST = 1000; // milliseconds
+    const box = boxRef.current, cv = cvRef.current;
+    const w = box.clientWidth, h = box.clientHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = w * dpr; cv.height = h * dpr;
+    const ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const N = w < 500 ? 5000 : 8000;
+    let raf, dead = false;
+
+    const load = (src) => new Promise((res) => {
+      const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src;
+    });
+
+    Promise.all(FACES.map((f) => load(f.src))).then((imgs) => {
+      if (dead || imgs.some((i) => !i)) return;
+      const off = document.createElement("canvas"); off.width = w; off.height = h;
+      const octx = off.getContext("2d", { willReadFrequently: true });
+
+      const sets = imgs.map((im) => {
+        octx.clearRect(0, 0, w, h);
+        const s = Math.min(w / im.width, h / im.height), dw = im.width * s, dh = im.height * s;
+        octx.drawImage(im, (w - dw) / 2, h - dh, dw, dh);
+        const d = octx.getImageData(0, 0, w, h).data, pts = [];
+        for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+          const i = (y * w + x) * 4;
+          if (d[i + 3] > 140) pts.push([x, y, `rgb(${d[i]},${d[i + 1]},${d[i + 2]})`]);
+        }
+        if (!pts.length) pts.push([0, 0, "#000"]);
+        for (let i = pts.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [pts[i], pts[j]] = [pts[j], pts[i]]; }
+        return Array.from({ length: N }, (_, i) => pts[i % pts.length]);
+      });
+
+      const P = Array.from({ length: N }, () => ({ x: Math.random() * w, y: Math.random() * h, bx: 0, by: 0, k: 0.04 + Math.random() * 0.06 }));
+      let cur = 0, phase = "form", t0 = performance.now();
+
+      const startBurst = (now) => {
+        phase = "burst"; t0 = now; setShown(false);
+        P.forEach((p) => { p.bx = p.x + (Math.random() - 0.5) * w * 0.9; p.by = p.y + (Math.random() - 0.85) * h * 0.6; });
+      };
+      skipRef.current = () => { if (phase === "hold") startBurst(performance.now()); };
+
+      const tick = (now) => {
+        const dt = now - t0;
+        if (phase === "form" && dt > FORM) { phase = "hold"; t0 = now; setShown(true); }
+        else if (phase === "hold" && dt > HOLD) startBurst(now);
+        else if (phase === "burst" && dt > BURST) { cur = (cur + 1) % FACES.length; phase = "form"; t0 = now; setIdx(cur); }
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.globalAlpha = phase === "burst" ? Math.max(0, 1 - dt / BURST) : phase === "form" ? Math.min(1, dt / 600) : 1;
+        const set = sets[cur];
+        for (let i = 0; i < N; i++) {
+          const p = P[i];
+          const gx = phase === "burst" ? p.bx : set[i][0];
+          const gy = phase === "burst" ? p.by : set[i][1];
+          p.x += (gx - p.x) * p.k; p.y += (gy - p.y) * p.k;
+          ctx.fillStyle = set[i][2];
+          ctx.fillRect(p.x, p.y, 2, 2);
+        }
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    });
+
+    return () => { dead = true; cancelAnimationFrame(raf); };
+  }, []);
+
+  return (
+    <div className="order-1 flex w-full flex-col items-center lg:order-2">
+      <div ref={boxRef} onClick={() => skipRef.current()} className="relative h-[22rem] w-full cursor-pointer md:h-[30rem] lg:h-[36rem]">
+        <canvas
+  ref={cvRef}
+  className={`h-full w-full transition-opacity ${shown ? "opacity-0 duration-700" : "opacity-100 duration-100"}`}
+  role="img"
+  aria-label={label}
+/>
+        <img
+          src={FACES[idx].src}
+          alt={label}
+          className={`pointer-events-none absolute inset-0 h-full w-full object-contain object-bottom transition-opacity ${shown ? "opacity-100 duration-700" : "opacity-0 duration-200"}`}
+        />
+      </div>
+      <p className="my-3 text-xs font-bold uppercase tracking-[0.25em]">{label}</p>
+    </div>
+  );
+}
+
 
 function Hero() {
   const links = [["GitHub", site.github], ["LinkedIn", site.linkedin], ["Instagram", site.instagram], ["WhatsApp", `https://wa.me/${site.whatsapp}`]];
@@ -118,9 +219,7 @@ function Hero() {
             ))}
           </ul>
         </div>
-        <div className="order-1 flex h-[22rem] items-end justify-center md:h-[30rem] lg:order-2 lg:h-[36rem]">
-          <img src="/rideeka.webp" alt={`${site.first} ${site.last}`} className="h-full w-auto max-w-full object-contain object-bottom" onError={(e) => (e.currentTarget.style.display = "none")} />
-        </div>
+       <PhotoFlip />
         <div className="order-3 pb-12 lg:w-72 lg:justify-self-end">
           <p className="mb-6 text-xs font-bold tracking-[0.25em] text-black/60">FIND ME ONLINE</p>
           <div className="space-y-3">
@@ -188,35 +287,117 @@ function Projects() {
   );
 }
 
+const SERVICE_COLORS = [
+  { bg: "#7f1b1b", fg: "#fff" },
+  { bg: "#2b5cb0", fg: "#fff" },
+  { bg: "#e8b92b", fg: "#111" },
+  { bg: "#080808", fg: "#fff" },
+];
+
 function Services() {
+  const boxRef = useRef(null);
+  const nodeRefs = useRef([]);
+  const [W, setW] = useState(0);
+  const [shown, setShown] = useState(0);
+  const [target, setTarget] = useState(0);
   const [open, setOpen] = useState(null);
+  const ready = W > 0;
+
+  useEffect(() => {
+    const ro = new ResizeObserver(([e]) => setW(e.contentRect.width));
+    ro.observe(boxRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    const io = new IntersectionObserver(
+      (es) => es.forEach((e) => e.isIntersecting && setTarget((t) => Math.max(t, Number(e.target.dataset.i) + 1))),
+      { rootMargin: "0px 0px -15% 0px" }
+    );
+    nodeRefs.current.forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
+  }, [ready]);
+
+  useEffect(() => {
+    if (shown >= target) return;
+    const t = setTimeout(() => setShown(shown + 1), shown === 0 ? 150 : 450);
+    return () => clearTimeout(t);
+  }, [shown, target]);
+
+  const size = W < 640 ? 124 : 176;
+  const gap = size * 0.78;
+  const PAD = size / 2 + 24;
+  const ROW = size + 64;
+  const H = PAD * 2 + (services.length - 1) * ROW;
+  const wide = W >= 1100;
+  const CW = 300;
+  const pos = services.map((_, i) => ({ x: W / 2 + (i % 2 ? gap : -gap), y: PAD + i * ROW }));
+
   return (
     <PageSection id="services" title="SERVICES">
-      <div className="space-y-3">
-        {services.map((s, i) => {
-          const on = open === i;
-          return (
-            <div key={s.name} className="overflow-hidden rounded-2xl bg-[#080808] text-white">
-              <button onClick={() => setOpen(on ? null : i)} className="flex w-full items-center gap-4 px-4 py-2 text-left md:gap-8 md:px-8 md:py-3">
-                <span className="w-6 text-xs text-white/30">{String(i + 1).padStart(2, "0")}</span>
-                <span className="font-heading flex-1 text-2xl font-extrabold md:text-4xl">
-                  {s.name}
-                  {s.learning && <span className="ml-3 rounded-full border border-white/40 px-3 py-1 align-middle text-[10px] font-semibold uppercase tracking-widest">Learning</span>}
-                </span>
-                <span className={`text-2xl transition-transform duration-300 ${on ? "-rotate-90" : ""}`}><Arrow down /></span>
-              </button>
-              <div className={`grid transition-all duration-300 ${on ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                <div className="overflow-hidden">
-                  <div className="grid gap-6 px-5 pb-8 md:grid-cols-3 md:px-24">
-                    {[["What I use it for", s.use], ["How I do it", s.how], ["Tools", s.tools]].map(([h, t]) => (
-                      <div key={h}><p className="mb-2 text-xs font-bold tracking-widest text-white/50">{h}</p><p className="text-sm leading-relaxed">{t}</p></div>
-                    ))}
-                  </div>
+      <div ref={boxRef} className="relative w-full" style={{ height: ready ? H : 600 }}
+        onClick={(e) => e.target === e.currentTarget && setOpen(null)}>
+        {ready && (
+          <>
+            <svg width={W} height={H} className="pointer-events-none absolute inset-0" aria-hidden="true">
+              {pos.slice(0, -1).map((p, i) => {
+                const q = pos[i + 1];
+                const d = `M${p.x} ${p.y} C${p.x} ${p.y + ROW * 0.55} ${q.x} ${q.y - ROW * 0.55} ${q.x} ${q.y}`;
+                return (
+                  <g key={i}>
+                    <mask id={`road${i}`} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
+                      <path d={d} fill="none" stroke="#fff" strokeWidth="6" pathLength="1" strokeDasharray="1"
+                        strokeDashoffset={shown > i ? 0 : 1} style={{ transition: "stroke-dashoffset 0.8s ease-in-out" }} />
+                    </mask>
+                    <path d={d} fill="none" stroke="#080808" strokeWidth="2" strokeDasharray="8 9" mask={`url(#road${i})`} />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {services.map((s, i) => {
+              const p = pos[i], c = SERVICE_COLORS[i % SERVICE_COLORS.length];
+              const on = open === i, vis = i < shown;
+              return (
+                <button key={s.name} ref={(el) => (nodeRefs.current[i] = el)} data-i={i}
+                  onPointerEnter={(e) => e.pointerType === "mouse" && setOpen(i)}
+                  onPointerLeave={(e) => e.pointerType === "mouse" && setOpen(null)}
+                  onClick={(e) => (e.nativeEvent.pointerType === "mouse" ? setOpen(i) : setOpen(on ? null : i))}
+                  className="absolute flex flex-col items-center justify-center rounded-full border-2 border-[#080808] px-3 text-center shadow-xl"
+                  style={{
+                    left: p.x - size / 2, top: p.y - size / 2, width: size, height: size,
+                    background: on ? c.bg : "#ededeb", color: on ? c.fg : "#080808",
+                    opacity: vis ? 1 : 0, pointerEvents: vis ? "auto" : "none",
+                    transform: vis
+                      ? `perspective(600px) translate3d(0,0,0) rotateX(0deg) scale(${on ? 1.06 : 1})`
+                      : "perspective(600px) translate3d(0,80px,-300px) rotateX(40deg) scale(1)",
+                    transition: "transform .8s cubic-bezier(.2,.8,.2,1), opacity .6s, background .3s, color .3s",
+                  }}>
+                  <span className="font-heading text-sm font-bold leading-tight md:text-base">{s.name}</span>
+                  <span className={`mt-2 text-lg transition-transform duration-300 ${on ? "rotate-90" : ""}`}><Arrow down /></span>
+                </button>
+              );
+            })}
+
+            {services.map((s, i) => {
+              const p = pos[i];
+              return (
+                <div key={`card-${s.name}`} onClick={() => setOpen(null)}
+                  className={`z-30 rounded-2xl bg-[#080808] p-6 text-white shadow-2xl transition-opacity duration-300 ${open === i ? "opacity-100" : "pointer-events-none opacity-0"} ${wide ? "absolute" : "fixed inset-x-3 bottom-3"}`}
+                  style={wide ? { width: CW, left: i % 2 ? p.x + size / 2 + 16 : p.x - size / 2 - 16 - CW, top: p.y, transform: "translateY(-50%)" } : undefined}>
+                  <p className="text-[11px] font-semibold tracking-widest text-white/50">SERVICE {String(i + 1).padStart(2, "0")}{s.learning ? " · LEARNING" : ""}</p>
+                  <p className="mt-4 text-[11px] font-bold tracking-widest text-white/50">WHAT IT’S FOR</p>
+                  <p className="mt-1 text-sm leading-relaxed">{s.use}</p>
+                  <p className="mt-4 text-[11px] font-bold tracking-widest text-white/50">HOW I DO IT</p>
+                  <p className="mt-1 text-sm leading-relaxed">{s.how}</p>
+                  <p className="mt-4 text-[11px] font-bold tracking-widest text-white/50">TOOLS</p>
+                  <p className="mt-1 text-sm leading-relaxed">{s.tools}</p>
                 </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </>
+        )}
       </div>
     </PageSection>
   );

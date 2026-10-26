@@ -13,8 +13,8 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Montserrat:wght@800;900&family=Noto+Sans+Sinhala:wght@600&family=Noto+Sans+Devanagari:wght@600&family=Noto+Sans+JP:wght@700&display=swap"
-          rel="stylesheet"
-        />
+          rel="stylesheet"/>
+        <link rel="preload" as="image" href="/rideeka-ba.webp" />
       </head>
       <body className="bg-[#ededeb] text-[#080808] antialiased">{children}</body>
     </html>
